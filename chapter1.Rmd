@@ -9,5 +9,14 @@
 date()
 
 ```
-The text continues here.
+How are you feeling right now? - I'm feeling a bit overwhelmed but hopeful.
+What do you expect to learn? - Running data analysis with R.
+Where did you hear about the course? - This course was recommended on Kimmo's other courses.
 
+How did the R for Health Data Science book and the Exercise Set 1 work as a "crash course" on modern R tools and using RStudio? - This was an interesting addition to the course materials. I like how the book and the Exercise file are synchronized. 
+Which were your favorite topics? - I found th different methods for filtering data useful.
+Which topics were most difficult? - Joining multiple data sets
+Some other comments on the book and our new approach of getting started with R Markdown etc.? - With little background on working with R there seems to be a lot to learn. Luckily there is no need to memorize everything. 
+
+Link to GitHub repository:
+https://github.com/AapoVir/IODS-project.git
