@@ -1,6 +1,6 @@
 ---
 title: "IODS course project"
-author: Aapo Virtanen
+author: AapoVir
 output:
   html_document:
     theme: cosmo
