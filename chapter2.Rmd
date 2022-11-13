@@ -1,4 +1,4 @@
-# Insert chapter 2 title here
+# Regression and model validation
 
 *Describe the work you have done this week and summarize your learning.*
 
@@ -8,6 +8,94 @@
 
 ```{r}
 date()
+#install.packages("GGally")
+library(tidyverse) 
+library(GGally)
+library(ggplot2)
 ```
 
-Here we go again...
+
+*1.Read the students2014 data into R either from your local folder*
+```{r}
+learning2014 <- read_csv("data/learning2014.csv")
+
+#Explore the structure and the dimensions of the data and describe the dataset briefly
+
+dim(learning2014)
+  #The dataset has 7 variables (columns) and 166 observations (rows)
+str(learning2014)
+  # The dataset has six numeric variables (age, attitude, deep, stra, surf, points) and one character/categorical variable (age).
+```
+
+*2.Show a graphical overview of the data*
+```{r}
+ggpairs(learning2014, mapping = aes(col = gender,alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+
+# Show summaries of the variables in the data
+summary(learning2014)
+type_sum(learning2014)
+```
+Describe and interpret the outputs, commenting on the distributions of the variables and the relationships between them.
+
+Women outnumber men in the cohort. Distribution of age is skewed to the left. Age of participants ranges between 17 and 55 years, mean 25,51 and median 22,00 years. Attitude and points are positively correlated. Surface and strategic learning are negatively correlated.
+
+
+
+*3.Choose three variables as explanatory variables and fit a regression model where exam points is the target (dependent, outcome) variable.* 
+```{r}
+#access library
+library(ggplot2)
+
+#Fit a regression model for surface and deep questions as explanatory variables and points as the outcome variable
+lm1 <- lm(points ~ surf+deep+age, data = learning2014)
+lm1
+
+#Show a summary of the fitted model and comment and interpret the results. Explain and interpret the statistical test related to the model parameters. 
+summary(lm1)
+
+```
+The test provides a multivariate linear regression model. Surface questions correlate negatively with the outcome variable 'points'. The correlation is statistically significant. Deep questions or age have no statistically significant correlation with the outcome variable.
+
+```{r}
+#If an explanatory variable in your model does not have a statistically significant relationship with the target variable, remove the variable from the model and fit the model again without it.
+# Repeating the model without 'deep' and 'age'.
+lm2 <- lm(points ~ surf, data = learning2014)
+lm2
+```
+
+
+
+*4.Using a summary of your fitted model, explain the relationship between the chosen explanatory variables and the target variable (interpret the model parameters). Explain and interpret the multiple R-squared of the model.*
+```{r}
+#Taking the summary of the new model.
+summary(lm2)
+
+```
+Removing 'deep' and 'age' from the model renders the association of surface questions with 'points' statistically insignificant (p= 0.06351). 
+
+R-squared is measure of accuracy for linear models. It tell to what extent the tested variable explains the changes in the output variable. Adjusted R-squared:  0.01487 indicates that about 15 % of the variance in 'points' is explained by the value of 'surf'.
+
+
+*5.Produce the following diagnostic plots*
+```{r}
+#Residuals vs Fitted values
+plot(lm2, which=c(1))
+
+```
+
+```{r}
+#Normal QQ-plot
+plot(lm2, which=c(2))
+
+```
+
+```{r}
+#Residuals vs Leverage. 
+plot(lm2, which=c(5))
+
+```
+
+*Explain the assumptions of the model and interpret the validity of those assumptions based on the diagnostic plots.*
+
+The first diagnostic plot 'Residuals vs Fitted' plots the residuals against the fitted values of the response variable 'points'. The variability of the residuals seems rather constant across different fitted values indicating that the fitted model is appropriate. In the probability plot for residuals, Normal Q-Q, the points all mostly in a straight line. The spread of standardized residuals do not change as a function of leverage meaning that variance of the explanatory variable 'surf' is rather constant for different values of the outcome variable 'points'.
+
