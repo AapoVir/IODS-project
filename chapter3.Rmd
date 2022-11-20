@@ -1,0 +1,126 @@
+---
+title: "chapter3"
+author: "AapoVir"
+date: "2022-11-17"
+output: html_document
+---
+
+```{r}
+#install.packages("GGally")
+library(tidyverse) 
+library(GGally)
+library(ggplot2)
+
+#alc<-read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/alc.csv", sep=";", header=TRUE)
+
+
+# Alternative for downloading from working directory data folder
+alc<-read.csv("data/alc.csv")
+
+#Checking variable names
+names(alc)
+```
+
+This data illustrate student achievement in secondary education of two Portuguese schools. Two datasets are provided for the performance in mathematics (mat) and Portuguese language (por). The data was acquired using school reports and questionnaires.
+
+The aim of this analysis is to find associations between levels of alcohol consumption and other variables in the data set. Here we focus on the relationship of high and low alcohol consumption with age, travel time between home and school, weekly study time and number of past class failures. We hypothesize that male sex, higher age and class failures are positively correlated with high alcohol consumption and study time negatively correlated. 
+
+
+```{r}
+#Exploring the distributions of the chosen variables and their relationships with alcohol consumption: age
+
+#Age vs high alcohol use, create cross-table for high and low alcohol use based on age
+alc %>%
+  group_by(high_use, age) %>%
+  tally() %>%
+  spread(high_use, n)
+
+#create linear regression model
+lm_age <-lm(high_use~age,data = alc)
+summary(lm_age)
+
+#Create box-plot
+g1 <- ggplot(alc, aes(x = high_use, y = age))
+
+# define the plot as a boxplot and draw it
+g1 + geom_boxplot() + ylab("age")
+
+```
+
+Based on the cross table, students were 15-22 years old, most students report low alcohol consumption. The number of students reporting low alcohol use is higher towards younger age. According to the linear regression model age is statistically significantly associated with high alcohol consumption. The box plot illustrates that students reporting high alcohol use tend to be older.
+
+```{r}
+#Exploring the distributions of the chosen variables and their relationships with alcohol consumption: traveltime
+
+#travel time vs high alcohol use, create cross-table for high and low alcohol use based on traveltime
+alc %>%
+  group_by(high_use, traveltime) %>%
+  tally() %>%
+  spread(high_use, n)
+
+#create linear regression model
+lm_traveltime <-lm(high_use~traveltime,data = alc)
+summary(lm_traveltime)
+
+#Create box-plot
+g2 <- ggplot(alc, aes(x = high_use, y = traveltime))
+
+# define the plot as a boxplot and draw it
+g2 + geom_boxplot() + ylab("traveltime")
+
+```
+
+
+Travel time is given numeric values from 1 to 4 based on following: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour. Most students have a less than 15 minute commute to school. According to the linear regression model travel time is positively correlated with high alcohol consumption and the association is statistically significant. 
+
+```{r}
+#Exploring the distributions of the chosen variables and their relationships with alcohol consumption: studytime
+
+#study time time vs high alcohol use, create cross-table for high and low alcohol use based on study time
+alc %>%
+  group_by(high_use, studytime) %>%
+  tally() %>%
+  spread(high_use, n)
+
+#create linear regression model
+lm_studytime <-lm(high_use~studytime,data = alc)
+summary(lm_studytime)
+
+#Create box-plot
+g3 <- ggplot(alc, aes(x = high_use, y = studytime))
+
+# define the plot as a boxplot and draw it
+g3 + geom_boxplot() + ylab("study time")
+
+
+```
+
+Weekly study time is given numeric values from 1 to 4 based on following: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours. Most students study 2 to 5 hours per week. According to the linear regression model study time is negatively correlated with high alcohol consumption and the association is statistically significant. 
+
+```{r}
+#Exploring the distributions of the chosen variables and their relationships with alcohol consumption: failures
+
+#study time time vs high alcohol use, create cross-table for high and low alcohol use based on study time
+alc %>%
+  group_by(high_use, failures) %>%
+  tally() %>%
+  spread(high_use, n)
+
+#create linear regression model
+lm_failures <-lm(high_use~failures,data = alc)
+summary(lm_failures)
+
+#Create box-plot
+g4 <- ggplot(alc, aes(x = high_use, y = failures))
+
+# define the plot as a boxplot and draw it
+g4 + geom_boxplot() + ylab("failures")
+
+
+```
+
+
+Most students have not failed a class According to the linear regression model class failures are positively correlated with high alcohol consumption and the association is statistically significant. 
+
+
+
