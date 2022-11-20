@@ -120,7 +120,7 @@ g4 + geom_boxplot() + ylab("failures")
 ```
 
 
-Most students have not failed a class According to the linear regression model class failures are positively correlated with high alcohol consumption and the association is statistically significant. 
+Most students have not failed a class. According to the linear regression model class failures are positively correlated with high alcohol consumption and the association is statistically significant. I have no words for my attempted box plot.
 
 
 
