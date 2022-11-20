@@ -1,6 +1,6 @@
 ---
 title: "chapter3"
-author: "AapoVir"
+author: AapoVir
 date: "2022-11-17"
 output: html_document
 ---
