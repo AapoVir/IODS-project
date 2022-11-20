@@ -1,7 +1,7 @@
 ---
 title: "chapter3"
 author: AapoVir
-date: "2022-11-17"
+date: "2022-11-20"
 output: html_document
 ---
 
@@ -23,7 +23,7 @@ names(alc)
 
 This data illustrate student achievement in secondary education of two Portuguese schools. Two datasets are provided for the performance in mathematics (mat) and Portuguese language (por). The data was acquired using school reports and questionnaires.
 
-The aim of this analysis is to find associations between levels of alcohol consumption and other variables in the data set. Here we focus on the relationship of high and low alcohol consumption with age, travel time between home and school, weekly study time and number of past class failures. We hypothesize that male sex, higher age and class failures are positively correlated with high alcohol consumption and study time negatively correlated. 
+The aim of this analysis is to find associations between levels of alcohol consumption and other variables in the data set. Here we focus on the relationship of high and low alcohol consumption with age, travel time between home and school, weekly study time and number of past class failures. We hypothesize that age and past class failures are positively correlated with high alcohol consumption while study time might be negatively correlated. Travel time should not have any impact on alcohol consumption.
 
 
 ```{r}
