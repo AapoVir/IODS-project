@@ -1,0 +1,185 @@
+---
+title: "chapter4.Rmd"
+author: "AapoVir"
+date: "2022-11-25"
+output: html_document
+---
+
+```{r}
+#Install necessary packages
+library(tidyverse) 
+library(GGally)
+library(ggplot2)
+#install.packages(c("MASS", "corrplot"))
+```
+
+## The Boston Data
+
+This week's assignment utilizes data from the housing values in suburbs of Boston to explore the association of the explanatory variables on the crime rates in different suburbs.
+The Boston data set has 506 rows of observations representing data from different suburbs. The data set has  14 columns containing following variables:
+crim   :per capita crime rate by town.
+zn     : proportion of residential land zoned for lots over 25,000 sq.ft.
+indus  : proportion of non-retail business acres per town.
+chas   : Charles River dummy variable (= 1 if tract bounds river; 0 otherwise).
+nox    : nitrogen oxides concentration (parts per 10 million).
+rm     : average number of rooms per dwelling.
+age    : proportion of owner-occupied units built prior to 1940.
+dis    : weighted mean of distances to five Boston employment centres.
+rad    : index of accessibility to radial highways.
+tax    : full-value property-tax rate per 10,000 usd.
+ptratio: pupil-teacher ratio by town.
+black  : proportion of blacks by town
+lstat  : lower status of the population (percent).
+medv   : median value of owner-occupied homes in usd 1000s.
+
+
+
+```{r}
+#Download the Boston data
+library(MASS)
+
+# load the data
+data("Boston")
+dim(Boston)
+str(Boston)
+summary(Boston)
+
+
+```
+
+## Taking an overview of the variables
+
+The key statistical properties of the variables are presented in the Summary table above. The per capita crime rates vary between 0.00632 and 88.97620, the mean 3.61352 and median 0.25651 . The low median relative to the mean gives the impression that there are few suburbs with very high crime rates bringing the overall average higher.
+The proportion of industrial acres of zoned land use ranges between 0.46 and 27.74 %, mean 11.14 % and median 9.69 %.
+On average 68.57 % (median 77.50 %) of the owner-occupied houses were built before the 1940's. 
+The median value of the owner-occupied housing properties in the suburbs/towns ranges between 5.00 and 50.00 1000-usd, mean 22.53, median 21.20.
+
+The correlation matrix below shows the associations of the variables in the data set. The size and intensity of the color of the dot denotes the strength of the association, red color indicating negative and blue positive correlation. Looking at the crime column we can see that the variables indus, nox, age, rad, tax, ptratio, and lstat are associated with higher crime rates. Interpreting these data we can postulate that areas with higher industrial land use, closer access to major highways and accordingly higher nitrogen oxides concentration in the air are more prone to higher criminality. Variables that were associated with lower crime rates are zn, rm, dis, black, medv. Put together the data suggest that areas zoned for houses on larger land slots,  higher number of rooms per dwelling, longer distance to major employment centers, higher proportion of blacks in the town and more expensive housing had lower crime rates. 
+
+The table showing the numeric correlation matrix shows that rad (index of accessibility to radial highways) has the strongest positive association with criminality and median house price the strongest negative association with criminality.Other inferences can be read from the table as well such as the positive correlation between indus and rad (0.60) suggesting that industrial areas have bettew access to radial high ways, which makes logistically sense.
+
+```{r}
+
+library(tidyr); library(dplyr); library(ggplot2)
+
+
+#Examining the correlation of the variables
+cor_matrix <- cor(Boston) 
+round(cor_matrix, digits=2)
+library(corrplot)
+corrplot(cor_matrix, method="circle")
+
+
+```
+
+## Standardizing the dataset 
+
+Standardizing the data changed the range of the column values which are now much smaller. The column means are 0. 
+Next we create a categorical variable of the crime rate using quantiles as breaking points and replace the old crime variable with the new categorical variable. Then the data set is divided creating a test and training data set.
+
+```{r}
+
+boston_scaled <- scale(Boston)
+summary(boston_scaled)
+# Save as data frame
+boston_scaled<-as.data.frame(boston_scaled)
+
+summary(boston_scaled$crim)
+#Setting quantiles as breaks for categoricals crime variable
+bins <- quantile(boston_scaled$crim)
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE)
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+
+#Creating traning set
+library(dplyr)
+library(MASS)
+boston_scaled <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/boston_scaled.txt",
+                            sep=",", header = T)
+boston_scaled$crime <- factor(boston_scaled$crime, levels = c("low", "med_low", "med_high", "high"))
+
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+
+#Fitting the linead discriminate model
+
+lda.fit <- lda(crime~., data = train)
+
+# print the lda.fit object
+lda.fit
+
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 2, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+
+classes <- as.numeric(factor(train$crime))
+
+# plot the lda results
+plot(lda.fit, dimen = 2,col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 2)
+```
+
+## Linear discriminate analysis
+
+The linear discriminate plot above shows the clusters of towns with high crime rate on the right side of the graph and other categories of crime rates (low, med low, med high) on the left. Arrows representing the effect size of each explanatory variable are drawn on the graph with rad having the longest arrow towards high crime rate. This means that for any given suburb easier access to the radial highways of greater Boston is associated with criminality.
+
+
+```{r}
+
+#Reloading the Boston data and standardizing it
+library(MASS)
+data("Boston")
+boston_scaled2<-as.data.frame(scale(Boston))
+
+#Calculate distances
+dist_eu <- dist(boston_scaled2)
+summary(dist_eu)
+
+#Calculating WCSS to determine optimal number of clusters
+set.seed(123)
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+#K-means
+
+km <- kmeans(boston_scaled2, centers = 4)
+pairs(boston_scaled2[, 1:5], col = km$cluster)
+
+#Repeating with two clusters
+km <- kmeans(boston_scaled2, centers = 2)
+pairs(boston_scaled2[, 1:5], col = km$cluster)
+
+
+
+```
+
+## K-means clustering
+
+Based on the calculations for within cluster sum of squares (WCSS) the optimal number of clusters is two. This is the point at which the value of total WCSS changes radically and the curve tilts the most. For the sake of comparison the k-means clustering is drawn with both four and two clusters. For sake of readability only the first five variables were included for this graphical data clustering. 
+
+```{r}
+# Drawing a scatter plot to see if older houses are less valuable than new ones
+library(tidyverse)
+clusters <- factor(km$cluster)
+boston_scaled2 %>% ggplot(aes(x = age, y = medv, col = clusters)) +
+  geom_point()
+
+````
+
+The scatter plot shows an example of clustering the observations based on the proportion of owner-occupied units built prior to 1940 (age) and median value of owner-occupied homes in usd 1000s (medv). The red cluster 1 in the lower right corner denotes the cheaper and older housing properties. The second green cluster is more evenlöy distributed.
+
+### *Thank you for reading my report for the week assignment. Have an awesome day!*
