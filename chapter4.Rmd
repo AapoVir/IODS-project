@@ -1,6 +1,6 @@
 ---
-title: "chapter4.Rmd"
-author: "AapoVir"
+title: "Clustering and classification"
+author: AapoVir
 date: "2022-11-25"
 output: html_document
 ---
