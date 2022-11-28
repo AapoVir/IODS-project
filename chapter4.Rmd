@@ -13,6 +13,9 @@ library(ggplot2)
 #install.packages(c("MASS", "corrplot"))
 ```
 
+
+# Clustering and classification
+
 ## The Boston Data
 
 This week's assignment utilizes data from the housing values in suburbs of Boston to explore the association of the explanatory variables on the crime rates in different suburbs.
