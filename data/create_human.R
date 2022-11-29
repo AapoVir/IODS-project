@@ -51,4 +51,7 @@ dim(human)
 
 #The new joined data set has 195 rows or observations and 19 columns or variables including the 2 new variables
 
+#Saving the new data
+write_csv(human, "data/human.csv")
+
 
