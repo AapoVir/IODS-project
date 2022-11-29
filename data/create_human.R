@@ -5,11 +5,10 @@
 
 #Downloading data 
 
-install.packages("readr")
+#install.packages("readr")
 library(readr)
 hd <- read_csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human_development.csv")
-gii <- read_csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/gender_inequality.csv")
-
+gii <- read_csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/gender_inequality.csv",na = "..")
 dim(hd)
 #The Human development index data has 195 rows and 8 columns
 
@@ -26,7 +25,7 @@ names(hd)
 #"Life Expectancy at Birth"               "Expected Years of Education"            "Mean Years of Education"               
 #"Gross National Income (GNI) per Capita" "GNI per Capita Rank Minus HDI Rank"    
 
-rename(hd, GNI = "Gross National Income (GNI) per Capita", Life.Exp = "Life Expectancy at Birth", Edu.Exp = "Expected Years of Education")
+hd<-rename(hd, GNI = "Gross National Income (GNI) per Capita", Life.Exp = "Life Expectancy at Birth", Edu.Exp = "Expected Years of Education")
 
 names(gii)
 #[1] "GII Rank"                                     "Country"                                      "Gender Inequality Index (GII)"               
@@ -34,7 +33,7 @@ names(gii)
 #"Population with Secondary Education (Female)" "Population with Secondary Education (Male)"   "Labour Force Participation Rate (Female)"    
 #"Labour Force Participation Rate (Male)"  
 
-rename(gii, Mat.Mor="Maternal Mortality Ratio", Ado.Birt="Adolescent Birth Rate", Parli.F="Percent Representation in Parliament", 
+gii<-rename(gii, Mat.Mor="Maternal Mortality Ratio", Ado.Birt="Adolescent Birth Rate", Parli.F="Percent Representation in Parliament", 
        Edu2.F="Population with Secondary Education (Female)", Edu2.M="Population with Secondary Education (Male)",Labo.F="Labour Force Participation Rate (Female)",
        Labo.M="Labour Force Participation Rate (Male)")
 
@@ -44,7 +43,12 @@ class(gii$Edu2.F)
 library(dplyr)
 library(tidyverse)
 library(scales)
-gii %>%
-  mutate(Edu.2FM= percent(Edu2.F/Edu2.M), Labo.FM=percent(Labo.F/Labo.M))
+gii<-mutate(gii, Edu.2FM = Edu2.F/Edu2.M, Labo.FM = Labo.F/Labo.M)
+
+#Joining data sets
+human <- inner_join(gii, hd, by = "Country", suffix = c(".gii", ".hd"))
+dim(human)
+
+#The new joined data set has 195 rows or observations and 19 columns or variables including the 2 new variables
 
 
