@@ -1,11 +1,9 @@
 
 #IODS course project
-#Aapo Virtanen
-#Assignment 4 data wranlging file
+#AapoVir
+#Assignment 5 data wranlging file
 
-#Downloading data 
-
-install.packages("readr")
+#install.packages("readr")
 library(readr)
 library(dplyr)
 library(tidyverse)
@@ -39,7 +37,8 @@ human <- human[1:last,]
 human<-as.data.frame(human)
 rownames(human) <- human$Country
 human<- select(human, -Country)
-#str(human)
-#View(human)
+str(human)
+#155 obs. of  8 variables:
+View(human)
 write_csv(human, "data/human.csv")
 
