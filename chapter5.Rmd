@@ -1,0 +1,203 @@
+---
+title: "chapter5"
+author: AapoVir
+date: "2022-11-30"
+output: html_document
+---
+
+
+```{r }
+library(readr)
+human<-read_csv("data/human.csv")
+names(human)
+str(human)
+```
+***
+
+# Dimensionality reduction techniques
+
+## Overview of the Human data
+
+The Human data is a composite of two joined data sets: the Human Development Index (HDI) data and Gender Inequality Index (GII) data. The HDI and GII data originate from the United Nations Development Programme (UNDP). 
+
+
+#### Human Development Index (HDI)
+
+The UNDP created the HDI emphasize that people and their capabilities should be the ultimate criteria for assessing the development of a country, not economic growth alone. The HDI takes into account a nation's longevity, education and income. The health dimension is assessed by life expectancy at birth, the education dimension is measured by mean of years of schooling for adults aged 25 years and more and expected years of schooling for children of school entering age. The standard of living dimension is measured by gross national income per capita. 
+
+
+#### Gender Inequality Index (GII)
+
+GII is a composite metric of gender inequality using three dimensions: reproductive health, empowerment and the labour market. The indicators of the reproductive health dimension are maternal mortality ratio and adolescent birth rate. The indicators of the empowerment dimension are proportions of women and men with at least secondary education and the shares of parliamentary seats. Ther indicator of the labour market dimension is the labour force participation rate for women and men.
+
+
+#### Variable descriptions
+
+There are 155 observations in the data. 
+
+The Human data set contains the following variables:
+* "Edu2.FM" = The ratio of women to men with at least secondary education  
+* "Labo.FM" = The ratio of women to men participating in the labour force
+* "Edu.Exp" = Mean years of schooling for adults aged 25 years or more and expected years of schooling for children of school entering age
+* "Life.Exp" = Life expectancy at birth
+* "GNI"     =  Gross national income per capita
+* "Mat.Mor" = Maternal mortality meaning the death of a woman during pregnancy, at delivery, or soon after delivery
+* "Ado.Birth" = Adolescent giving birth
+* "Parli.F"  = Share of women holding parliamentary seats
+
+
+#### Variable characteristics and distributions
+
+* The ratio of women to men with at least secondary education (Edu2.FM) ranges from 0.1717 to 1.4967, mean 0.8529 and median 0.9375. Globally more men than women hold degrees from at least secondary education.
+* The ratio of women to men  participating in the labour force ranges between 0.1857 and 1.0380, mean 0.7074 and median 0.7535. Globally more men participate in the labour force than women.
+* The mean years of schooling range from 5.40 to 20.20 years, mean 13.18 and median 13.5. The mean and median are almost the same and close to the middle of the range suggesting that the values are normally distributed as shown in the histogram below.
+* The Gross national income per capita ranges between 581 and 123124 usd, mean 17628 and 12040. A histogram for this variable is shown below indicating that the GNI is heavily skewed to the left with most countries in the lowest earning bracket and just a few rich countries.
+* Maternal mortality rangers from 1 to 1100, mean 149.1 and median 49.0. 
+* Adolescent birth rate ranges from 0.60 to 240.80, mean 47.16 and median 33.60.
+* Woman's proportion in parliament ranges from 0 to 57.50 %, mean 20.91 amd median 19.30.
+
+
+```{r}
+
+
+#Histogram
+par(mfrow=c(3,3))
+hist(human$Edu2.FM,col = 1, main = paste("Women's education ratio"), xlab= "Ratio of women with at least sec education", ylab = "n countries")
+hist(human$Labo.FM,col = 2, main = paste("Life expextancy at birth"), xlab= "years", ylab = "n countries")
+hist(human$Edu.Exp,col = 3, main = paste("Mean years of schooling"), xlab= "years", ylab = "n countries")
+hist(human$Life.Exp,col = 4, main = paste("Life expextancy at birth"), xlab= "years", ylab = "n countries")
+hist(human$GNI,col = 5, main = paste("GNI per capita"), xlab= "US dollars", ylab = "n countries")
+hist(human$Mat.Mor,col = 6, main = paste("Maternal mortality"), xlab= "n of maternal deaths per 100,000 live births", ylab = "n countries")
+hist(human$Ado.Birth,col = 7, main = paste("Adolescent birth rate"), xlab= "years", ylab = "n countries")
+hist(human$Parli.F,col = 8, main = paste("Woman in parliament"), xlab= "share of parliamentary seats", ylab = "n countries")
+
+```
+```{r}
+
+
+library(tidyr); library(dplyr); library(ggplot2)
+library(ggplot2)
+library(GGally)
+library(corrplot)
+library(readr)
+
+#Download data
+human<-read_csv("data/human.csv")
+
+#Take a summary of the data
+summary(human)
+
+#A matrix of scatterplots
+pairs(human[-1],)
+
+cor_matrix<-cor(human[-1],)
+round(cor_matrix, digits=2)
+corrplot(cor_matrix,method="square", type="lower",cl.pos="b", tl.pos="lt",tl.cex=0.8)
+
+```
+
+#### Variable correlations
+
+* The correlation matrix shows that maternal mortality is negatively correlated with expected years of education (-0.66), with life expectancy (-0.86) and GNI (-0.50).
+* Similarly, adolescent births are negative correlated with expected years of education (-0.53), with life expectancy (-0.73) and GNI (-0.56).
+* There is a clear positive correlation GNI and womens education (0.43), expected years of schooling (0.62), life expectancy (0.63). 
+
+***
+
+## Principal components analysis
+
+Principal component analysis (PCA) is a technique for analyzing large datasets containing a high number of dimensions per observation. PCA can increase interpretability of data while preserving the maximum amount of information, and enabling the visualization of multidimensional data. [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis) 
+
+First we attempt a PCA on the Human data without scaling the data first. This clusters the countries in the upper right corner with a lot of overlap so we can't discern how the dimensions impact our observations. Only countries representing some extremes in the data are seen separate from the main cluster (eg. Qatar, Kuwait, Sierra Leon etc).
+
+```{r}
+
+library(readr)
+human <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human2.txt", sep =",", header = TRUE)
+pca_human <- prcomp(human)
+biplot(pca_human, choices = 1:2, cex=c(0.5,0.8), col = c("grey40", "deeppink2"))
+
+```
+
+
+After standardizing the data we can see that the different countries are more spread out along the axes of the two principal components. The arrows represent the variables of the data. The variation in the data can be illustrated with the two principal components better after the standardization. We can see countries with high standards of living, long life expectancy and higher education clustered to the left and countries with lower standards of living, shorter life expectancy and lower education to the right in the graph. The wealthy countries are further divided in the vertical axes based on gender inequality with many Nordic and Western countries in the upper-left quadrant representing countries with better gender equality. Wealthy countries with poor gender equality are clustered toward th lower left quadrant e.g. the gulf countries. Afghanistan and Niger int he lower right corner of the PCA plot represent countries with low income and high gender inequality.
+
+In a nut shell, we can view the PC1 as the 'wealth and health' axes and the PC2 as the 'gender equality' axes. 
+
+
+
+
+```{r}
+# standardize the variables
+human <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human2.txt", sep =",", header = TRUE)
+human_std <- scale(human)
+
+# print out summaries of the standardized variables
+summary(human_std)
+
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human_std)
+
+# draw a biplot of the principal component representation and the original variables
+biplot(pca_human, choices = 1:2, cex=c(0.5,0.8), col = c("grey40", "deeppink2"))
+```
+
+***
+
+## Overview of the Tea data
+
+The Tea dataset contains the answers of a questionnaire on tea consumption. 
+There are 300 observations and 36 variables in the dataset.
+Instead of visualizing the whole data only 7 variables are show in bar plots below:
+* Most tea is consumed from tea bags as opposed to loose tea.
+* Most people drink tea without lemon, milk or other condiments.
+* Tea drinking is relaxing to most respondents. Only a minority associate tea drinking with spiritual practice.
+* The answers were almost split between sugar and no sugar use with tea.
+* Earl Gray appears to be the most popular tea label in this poll.
+* Most tea was bought from a chain store.
+
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(readr)
+tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+View(tea)
+str(tea)
+
+# column names to keep in the dataset
+keep_columns <- c("Tea", "How", "how", "sugar", "where","spirituality","relaxing")
+tea_time <- select(tea, one_of(keep_columns))
+str(tea_time)
+
+# visualize the dataset
+library(ggplot2)
+pivot_longer(tea_time, cols = everything()) %>% 
+  ggplot+geom_bar()+(aes(value)) + facet_wrap("name", scales = "free")+theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+
+## Multiple correspondence analysis
+
+Multiple correspondence analysis (MCA) is a method to analyze qualitative data used to detect patterns or structure in the data as well as in dimension reduction. The two axes of the MCA represent 
+The first dimension (Dim1) is the most important dimension in terms of the amount of variance accounted for. In the Tea data we can observe the most common characteristics clustered around the center of the graph (Dim1=0, Dim2=0). The common tea consumer habit includes Eearl Grey bought from a chain store drank as is or with milk. The more distinguishing features of tea consumption are spread our from the center. Looking at the lower right corner we can identify a cluster or variables depicting a true tea devotee who buys his/her loose leaf green tea from a designated tea shop.
+
+
+
+```{r}
+
+library(FactoMineR)
+mca <- MCA(tea_time, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"), graph.type = "classic", habillage = "quali")
+
+
+```
+
+
