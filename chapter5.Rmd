@@ -1,5 +1,5 @@
 ---
-title: "chapter5"
+title: "chapter5.Rmd"
 author: AapoVir
 date: "2022-11-30"
 output: html_document
@@ -32,18 +32,16 @@ GII is a composite metric of gender inequality using three dimensions: reproduct
 
 
 #### Variable descriptions
-
-There are 155 observations in the data. 
-
-The Human data set contains the following variables:
-* "Edu2.FM" = The ratio of women to men with at least secondary education  
-* "Labo.FM" = The ratio of women to men participating in the labour force
-* "Edu.Exp" = Mean years of schooling for adults aged 25 years or more and expected years of schooling for children of school entering age
-* "Life.Exp" = Life expectancy at birth
-* "GNI"     =  Gross national income per capita
-* "Mat.Mor" = Maternal mortality meaning the death of a woman during pregnancy, at delivery, or soon after delivery
-* "Ado.Birth" = Adolescent giving birth
-* "Parli.F"  = Share of women holding parliamentary seats
+* There are 155 observations in the data.
+* Human data set contains the following variables:
+* Edu2.FM = The ratio of women to men with at least secondary education  
+* Labo.FM = The ratio of women to men participating in the labour force
+* Edu.Exp = Mean years of schooling for adults aged 25 years or more and expected years of schooling for children of school entering age
+* Life.Exp = Life expectancy at birth
+* GNI    =  Gross national income per capita
+* Mat.Mor = Maternal mortality meaning the death of a woman during pregnancy, at delivery, or soon after delivery
+* Ado.Birth = Adolescent giving birth
+* Parli.F  = Share of women holding parliamentary seats
 
 
 #### Variable characteristics and distributions
@@ -108,7 +106,9 @@ corrplot(cor_matrix,method="square", type="lower",cl.pos="b", tl.pos="lt",tl.cex
 
 Principal component analysis (PCA) is a technique for analyzing large datasets containing a high number of dimensions per observation. PCA can increase interpretability of data while preserving the maximum amount of information, and enabling the visualization of multidimensional data. [PCA](https://en.wikipedia.org/wiki/Principal_component_analysis) 
 
+
 First we attempt a PCA on the Human data without scaling the data first. This clusters the countries in the upper right corner with a lot of overlap so we can't discern how the dimensions impact our observations. Only countries representing some extremes in the data are seen separate from the main cluster (eg. Qatar, Kuwait, Sierra Leon etc).
+
 
 ```{r}
 
@@ -121,6 +121,7 @@ biplot(pca_human, choices = 1:2, cex=c(0.5,0.8), col = c("grey40", "deeppink2"))
 
 
 After standardizing the data we can see that the different countries are more spread out along the axes of the two principal components. The arrows represent the variables of the data. The variation in the data can be illustrated with the two principal components better after the standardization. We can see countries with high standards of living, long life expectancy and higher education clustered to the left and countries with lower standards of living, shorter life expectancy and lower education to the right in the graph. The wealthy countries are further divided in the vertical axes based on gender inequality with many Nordic and Western countries in the upper-left quadrant representing countries with better gender equality. Wealthy countries with poor gender equality are clustered toward th lower left quadrant e.g. the gulf countries. Afghanistan and Niger int he lower right corner of the PCA plot represent countries with low income and high gender inequality.
+
 
 In a nut shell, we can view the PC1 as the 'wealth and health' axes and the PC2 as the 'gender equality' axes. 
 
@@ -142,53 +143,64 @@ pca_human <- prcomp(human_std)
 biplot(pca_human, choices = 1:2, cex=c(0.5,0.8), col = c("grey40", "deeppink2"))
 ```
 
-***
-
-## Overview of the Tea data
-
-The Tea dataset contains the answers of a questionnaire on tea consumption. 
-There are 300 observations and 36 variables in the dataset.
-Instead of visualizing the whole data only 7 variables are show in bar plots below:
-* Most tea is consumed from tea bags as opposed to loose tea.
-* Most people drink tea without lemon, milk or other condiments.
-* Tea drinking is relaxing to most respondents. Only a minority associate tea drinking with spiritual practice.
-* The answers were almost split between sugar and no sugar use with tea.
-* Earl Gray appears to be the most popular tea label in this poll.
-* Most tea was bought from a chain store.
-
-
 ```{r}
 
 library(dplyr)
 library(tidyr)
 library(readr)
-tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
-View(tea)
+library(ggplot2)
+tea <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", 
+                  sep = ",", header = T)
+tea$Tea <- factor(tea$Tea)
+tea$How <- factor(tea$How)
+tea$how <- factor(tea$how)
+tea$sugar <- factor(tea$sugar)
+tea$where <- factor(tea$where)
+tea$lunch <- factor(tea$lunch)
+
 str(tea)
 
-# column names to keep in the dataset
-keep_columns <- c("Tea", "How", "how", "sugar", "where","spirituality","relaxing")
-tea_time <- select(tea, one_of(keep_columns))
-str(tea_time)
 
-# visualize the dataset
+```
+***
+
+## Overview of the Tea data
+
+* The Tea dataset contains the answers of a questionnaire on tea consumption. 
+* There are 300 observations and 36 variables in the dataset.
+
+
+For the visualizing of the data we choose 6 interesting variables (how, How, pub, sugar, Tea and where):
+
+
+* Most tea is consumed from tea bags as opposed to loose tea.
+* Most people drink tea 'alone', that is, without lemon, milk or other additional flavoring.
+* Only a small fraction drink their tea at a pub.
+* The answers were almost split between sugar and no sugar use with tea.
+* Earl Gray appears to be the most popular tea label in this poll.
+* Most tea was bought from a chain store while only a small proportion of the respondents purchase tea from a tea shop.
+
+
+```{r}
 library(ggplot2)
-pivot_longer(tea_time, cols = everything()) %>% 
+pivot_longer(tea, cols = 12:17) %>% 
   ggplot+geom_bar()+(aes(value)) + facet_wrap("name", scales = "free")+theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
-
 ```
 
 
 ## Multiple correspondence analysis
 
 Multiple correspondence analysis (MCA) is a method to analyze qualitative data used to detect patterns or structure in the data as well as in dimension reduction. The two axes of the MCA represent 
-The first dimension (Dim1) is the most important dimension in terms of the amount of variance accounted for. In the Tea data we can observe the most common characteristics clustered around the center of the graph (Dim1=0, Dim2=0). The common tea consumer habit includes Eearl Grey bought from a chain store drank as is or with milk. The more distinguishing features of tea consumption are spread our from the center. Looking at the lower right corner we can identify a cluster or variables depicting a true tea devotee who buys his/her loose leaf green tea from a designated tea shop.
+The first dimension (Dim1) is the most important dimension in terms of the amount of variance accounted for. 
 
 
+In the Tea data we can observe the most common characteristics clustered around the center of the graph (Dim1=0, Dim2=0). The common tea consumer habit includes Eearl Grey bought from a chain store drank as is or with milk. The more distinguishing features of tea consumption are spread out from the center of the MCA factor map. Looking at the lower right corner we can identify a cluster of variables depicting a true tea devotee who buys his/her loose leaf green tea from a designated tea shop.
 
 ```{r}
-
+library(dplyr)
+library(tidyr)
 library(FactoMineR)
+tea_time<-tea[12:17]
 mca <- MCA(tea_time, graph = FALSE)
 
 # summary of the model
@@ -197,7 +209,8 @@ summary(mca)
 # visualize MCA
 plot(mca, invisible=c("ind"), graph.type = "classic", habillage = "quali")
 
-
 ```
 
+
+*Countless cups of tea were consumed during the completion of this assignment*
 
