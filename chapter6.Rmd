@@ -1,0 +1,307 @@
+---
+title: "chapter6"
+author: AapoVir
+date: "2022-12-07"
+output: html_document
+---
+
+
+# Analysis of longitudinal data
+
+This week we delve into different techniques to analyze longitudinal data where observations are collected on several different occasions over a period of time. First we look into ways to visualize such data.
+
+### Graphical Displays of Longitudinal Data
+
+In this part of the assignment we use data measuring weight gain in rats on different diets over 9-week period. The rats were divided into three groups. 
+
+
+* There were eight rats in the 1st group, four rats in the 2nd and 3rd groups, altogether 16 rats. 
+* At baseline the rats weighed between 225 g and 555 g, mean 365.9 and median 340.0.
+* At the end of the study the rats weighed between 245 g and 628 g, mean 404.1 and median 378.0. 
+
+
+Let's visualize the weight gain responses of the three groups of our rodents. 
+
+```{r}
+
+# Get RATS data and convert into log form RATSL
+library(dplyr); library(tidyr); library(ggplot2)
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = TRUE, sep = '\t')
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+RATSL <- pivot_longer(RATS, cols=-c(ID,Group), names_to = "WD",values_to = "Weight")  %>%  mutate(Time = as.integer(substr(WD,3,4))) %>% arrange(Time)
+RATSL$ID <- factor(RATSL$ID)
+RATSL$Group <- factor(RATSL$Group)
+
+#Looking at the data
+glimpse(RATS)
+summary(RATS)
+names(RATS)
+
+# Individual response profiles by group for the RATS data.
+names(RATSL)
+ggplot(RATSL, aes(x = Time, y = Weight, linetype = ID)) +
+  geom_line() + 
+  scale_linetype_manual(values = rep(1:16, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(RATSL$Weight), max(RATSL$Weight)))
+```
+
+
+
+The graph shows that some weight gain was observed in all groups of rats. The lines representing weight of a single rat are closer together in group 1 while the weights in group 2 and 3 are have a wider range. Due to inter group differences the scale is wide making smaller changes harder to discern from this visualization.
+
+Next let's see how standardizing the Rats data changes the response profile of the rats' weights. 
+
+
+
+```{r}
+# Same plots after standardizing the data
+RATSL <- RATSL %>%
+  group_by(Group) %>%
+  mutate(stdWeights = (Weight - mean(Weight))/sd(Weight) ) %>%
+  ungroup()
+#summary(RATSL)
+library(ggplot2)
+ggplot(RATSL, aes(x = Time, y = stdWeights, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:16, times=4)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  scale_y_continuous(name = " rats standardized")
+
+
+```
+
+
+Now it is easier to  see how the rats' weights developed over time. A *tracking phenomenon* — the tendency of rats with higher weight at baseline to have higher weight throughout the study — is more discernible in the standardized plot.
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+str(RATSL)
+
+#Summary data with means only without standard error bars
+RATSS <- RATSL %>%
+  group_by(Group,Time) %>%
+  summarise( mean = mean(Weight), se = sd(Weight)/sqrt(4) ) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(RATSS)
+
+# Plot the mean profiles
+#x = Time, y = stdWeights, linetype = ID
+library(ggplot2)
+ggplot(RATSS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, linetype="1"), width=0.3) +
+  #theme(legend.position = c(0.8,0.8,0.8)) +
+  scale_y_continuous(name = "mean")
+
+
+
+```
+
+
+The plot whos a gradual weight gain of rats in all groups over the course of the 64 days follow-up.
+
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+# Create a summary data by treatment and subject with mean as the summary variable (ignoring baseline week 0)
+RATS_Sum <- RATSL %>%
+  group_by(Group, ID) %>%
+  summarise( mean=mean(Weight) ) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(RATS_Sum )
+
+# Draw a boxplot of the mean versus treatment
+library(ggplot2)
+ggplot(RATS_Sum, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight)")
+
+
+```
+
+
+Here we have drawn boxplots for the summary measures of the three groups showing mean weights of each group. We can see that the mean weights of the rats vary between groups a lot with little overlap between groups. The first group has the lightest rats while the third group has the heaviest rats. Group two mean has the widest distribution due to one outlier rat. Next, lets see how removing the fat rat from group 2 changes the boxplot of summary means.
+
+
+
+```{r}
+
+# filtering the outlier from Group 2
+RATS_Sum <- filter(RATS_Sum, mean<550)
+library(ggplot2)
+ggplot(RATS_Sum, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight")
+
+```
+
+
+The summary measure varies less in group 2 after removing the outlier making the boxpltos more equal in width for all groups.
+The relative order of the ascending mean weights from group 1 to 3 remains. To make sure the visually discernible difference is true, let's perform an analysis of variance (anova) as a formal test for a difference. In the anova output below the p-value (3.387e-12) indicates a statistically significant difference in the means between the groups. The F value (or F statistic) is far from 1 indicating that the variation of the group means is large and significant.
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+# Fit the linear model with the mean as the response 
+fit <- lm(mean ~Group, data = RATS_Sum)
+# Compute the analysis of variance table for the fitted model with anova()
+anova(fit)
+```
+
+
+## Linear mixed effects models
+
+
+This part of the assignment uses data from BPRS data. Here 40 male subjects were randomly assigned to one of two treatment groups and each subject was rated on the brief psychiatric rating scale (BPRS) measured at baseline (week 0) and then at weekly intervals for eight weeks. The BPRS assesses the level of 18 symptom each rated from one (not present) to seven (extremely severe). The scale is used to evaluate patients suspected of having schizophrenia.
+
+
+First we will attempt to plot our data showing the change of bprs scores over time. Something about this graph is awry but at least it appears to have a descending slope. 
+
+
+```{r}
+library(dplyr); library(tidyr)
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  pivot_longer(BPRS, cols=-c(treatment,subject),names_to = "weeks",values_to = "bprs") %>% arrange(weeks)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,5)))
+rm(BPRS)
+#str(BPRSL)
+library(ggplot2)
+ggplot(BPRSL, aes(x = week, y = bprs, group = subject)) +
+  geom_line()
+```
+
+
+### Linear regression model
+
+
+Ignoring the fact that the repeated measurements were done on the same individuals we analyse the data with *multiple linear regression* first. Looking at the summary of the regression model from the BPRS data where Brief Psychiatric Rating Scale score is the response variable and week and treatment are explanatory variables we can see that the variable week is negatively correlated with the BPRS score (t-value -8.995) and the association is statistically significant (p<2e-16). It appears that over time the patients get better regardless of the intervention. Treatment 2 showed no statistically significant effect on the BPRS score. However, the model makes the unlikely assumption that the repeated measures of bprs scores are independent.
+
+
+
+```{r}
+BPRS_reg <- lm(bprs ~ week + treatment, data=BPRSL)
+
+# print out a summary of the model
+summary(BPRS_reg)
+
+
+```
+
+
+
+### Random Intercept Model
+
+
+Because the observations of the bprs scores are not independent of one another we need additional models. First we shall create a *random intercept model* where (1 | subject) denotes the random-effects term. The summary of the *random intercept model* (BPRS_ref) shows similar findings than the previous *multiple linear model*: time appears to be negatively correlated with bprs score. Looking at the standard error of time (week) in the two models, 0.2524 for the linear model 0.2084 for the random intercept model, there is slightly larger in the former. This is because the assumption of independence of a within-subject covariate leads to a larger standard error.
+
+
+
+```{r}
+library(dplyr); library(tidyr)
+library(lme4)
+BPRS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/BPRS.txt", sep  =" ", header = T)
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  pivot_longer(BPRS, cols=-c(treatment,subject),names_to = "weeks",values_to = "bprs") %>% arrange(weeks)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,5)))
+
+#create a random intercept model
+BPRS_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRSL, REML = FALSE)
+summary(BPRS_ref)
+```
+
+
+### Random Intercept and Random Slope Model
+
+
+Here we fit a *random intercept and random slope model* with week and subject as the random effects. The association of the week with bprs score is similar that in the previous models (t-value -7.433). The likelihood ratio test provides a Chi-squared 7.2721 and a small p-valua 0.02636. Therefore the random intercept and random slope model appears to provide a superior fit compared to the random intercept model. The ouptus are given below.
+
+
+```{r}
+# create a random intercept and random slope model
+BPRS_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRSL, REML = TRUE)
+summary(BPRS_ref1)
+# perform an ANOVA test on the two models
+anova(BPRS_ref1, BPRS_ref)
+```
+
+### Comparison of Random Intercept and Slope Models with interaction
+
+
+Fianlly, let's add the interaction of weeks and treatment to the mode and create a *random intercept and slope mode with interaction*. Comparing the two models the *random intercept and random slope model with interaction* (BPRS_ref2) does not provide any better fit than the corresponding comparison model without the interaction as an explanatory variable (BPRS_ref1). This is evidenced my the small Chi-squared value 3.1712 and the  high p-value 0.07495. The outputs to this analysis are shown below.
+
+
+```{r}
+# Work with the exercise in this chunk, step-by-step. Fix the R code!
+# RATS and RATSL are available
+
+# create a random intercept and random slope model with the interaction
+library(lme4)
+BPRS_ref2 <- lmer(bprs ~ week + treatment + (week | subject) + (week*treatment), data = BPRSL, REML = FALSE)
+summary(BPRS_ref2)
+# perform an ANOVA test on the two models
+anova(BPRS_ref2, BPRS_ref1)
+
+
+
+```
+
+### Plotting the observed and fitted values
+
+
+Here we attempt plotting the  bprs scores as observed and with fitted values. These lovely drawings look a bit off but at least we can identify the descending slope of the bprs values over time.
+
+
+```{r}
+
+
+# draw the plot of BPRSL with the observed bprs score values
+ggplot(BPRSL, aes(x = week, y = bprs, group = subject)) +
+  geom_line() +
+  scale_x_continuous(name = "weeks", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "bprs") +
+  theme(legend.position = "top")
+
+# Create a vector of the fitted values
+Fitted <- fitted(BPRS_ref2)
+
+library(dplyr)
+library(tidyr)
+# Create a new column fitted to RATSL
+#RATSL$Fitted_values<-Fitted
+BPRSL<-BPRSL%>%
+  mutate(Fitted)
+
+# draw the plot of BPRSL with the Fitted values of weight
+library(ggplot2)
+ggplot(BPRSL, aes(x = week, y = Fitted, group = subject)) +
+  geom_line() +
+  scale_x_continuous(name = "weeks", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "Fitted bprs") +
+  theme(legend.position = "top")
+
+```
+
+### Thanks for the peer review
+
+
+### *Merry Christmas*
