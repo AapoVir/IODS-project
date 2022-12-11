@@ -301,7 +301,7 @@ ggplot(BPRSL, aes(x = week, y = Fitted, group = subject)) +
 
 ```
 
-### Thanks for the peer review
+#### Thanks for the peer review
 
 
 ### *Merry Christmas*
