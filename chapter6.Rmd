@@ -172,7 +172,7 @@ anova(fit)
 This part of the assignment uses data from BPRS data. Here 40 male subjects were randomly assigned to one of two treatment groups and each subject was rated on the brief psychiatric rating scale (BPRS) measured at baseline (week 0) and then at weekly intervals for eight weeks. The BPRS assesses the level of 18 symptom each rated from one (not present) to seven (extremely severe). The scale is used to evaluate patients suspected of having schizophrenia.
 
 
-First we will attempt to plot our data showing the change of bprs scores over time. Something about this graph is awry but at least it appears to have a descending slope. 
+First we will plot our data showing the change of bprs scores over time. The slightly overlapping confidence interval shading makes the graph a bit hazy but we can observe a slight decline in the bprs values over time.
 
 
 ```{r}
@@ -186,7 +186,7 @@ rm(BPRS)
 #str(BPRSL)
 library(ggplot2)
 ggplot(BPRSL, aes(x = week, y = bprs, group = subject)) +
-  geom_line()
+  geom_smooth()
 ```
 
 
@@ -268,7 +268,7 @@ anova(BPRS_ref2, BPRS_ref1)
 ### Plotting the observed and fitted values
 
 
-Here we attempt plotting the  bprs scores as observed and with fitted values. These lovely drawings look a bit off but at least we can identify the descending slope of the bprs values over time.
+Here we plot the  bprs scores as observed and with fitted values. The descending slope is more apparent in the fitted plot.
 
 
 ```{r}
@@ -276,7 +276,7 @@ Here we attempt plotting the  bprs scores as observed and with fitted values. Th
 
 # draw the plot of BPRSL with the observed bprs score values
 ggplot(BPRSL, aes(x = week, y = bprs, group = subject)) +
-  geom_line() +
+  geom_smooth() +
   scale_x_continuous(name = "weeks", breaks = seq(0, 60, 20)) +
   scale_y_continuous(name = "bprs") +
   theme(legend.position = "top")
@@ -294,7 +294,7 @@ BPRSL<-BPRSL%>%
 # draw the plot of BPRSL with the Fitted values of weight
 library(ggplot2)
 ggplot(BPRSL, aes(x = week, y = Fitted, group = subject)) +
-  geom_line() +
+  geom_smooth() +
   scale_x_continuous(name = "weeks", breaks = seq(0, 60, 20)) +
   scale_y_continuous(name = "Fitted bprs") +
   theme(legend.position = "top")
